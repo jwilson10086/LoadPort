@@ -1,4 +1,9 @@
-﻿using System;
+﻿// ================================================================
+// SerialManager.cs — 保留为工具/枚举集合类
+// 注意：Loadport 类已改为使用 ICommChannel 接口（LoadPort\Comm\），
+//       SerialManager 不再作为基类使用，仅保留枚举和工具方法供参考。
+// ================================================================
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;

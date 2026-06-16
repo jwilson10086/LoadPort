@@ -86,19 +86,19 @@ namespace LoadPort
             {
                 Logger.LogInfo("开始释放资源...");
 
-                // 关闭 LoadPort 串口
+                // 关闭 LoadPort 通道（串口 或 TCP）
                 foreach (var lp in LoadPortFactory.AllPorts)
                 {
                     if (lp.IsOpen)
                     {
                         try
                         {
-                            lp.Close(); // 你 LoadPort 类里应该有 Close 方法封装串口关闭
-                            Logger.LogInfo($"LoadPort {lp.Name} 串口已关闭");
+                            lp.Close();
+                            Logger.LogInfo($"LoadPort {lp.Name} 通道已关闭");
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError($"关闭 {lp.Name} 串口失败: {ex.Message}");
+                            Logger.LogError($"关闭 {lp.Name} 通道失败: {ex.Message}");
                         }
                     }
                 }
@@ -146,40 +146,50 @@ namespace LoadPort
 
             // 连接 PLC
             InitPLC();
-
             StartPlcMonitor();
 
-            // 读取并创建所有 LoadPort
+            // 初始化所有 LoadPort（支持串口 / TCP）
+            InitLoadPorts();
+        }
+
+        /// <summary>
+        /// 初始化/重新初始化所有 LoadPort（在 Load 或通讯设置保存后调用）
+        /// </summary>
+        public void InitLoadPorts()
+        {
+            // 先关闭旧通道
+            foreach (var lp in LoadPortFactory.AllPorts)
+            {
+                try { lp.Close(); } catch { }
+            }
+
             string lpConfigPath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "loadport",
-                "loadport_config.json"
-            );
+                AppDomain.CurrentDomain.BaseDirectory, "loadport", "loadport_config.json");
             LoadPortFactory.LoadFromConfig(lpConfigPath);
-            // 启动 LoadPort 后台任务
+
+            // 清除旧按钮组
+            var oldGroups = flowLayoutPanelMain.Controls.OfType<GroupBox>().ToList();
+            foreach (var gb in oldGroups)
+                flowLayoutPanelMain.Controls.Remove(gb);
 
             foreach (var lp in LoadPortFactory.AllPorts.Where(p => !p.Bypass))
             {
                 if (lp.IsOpen)
-                    Logger.LogInfo($"LoadPort {lp.Name} 打开 端口：{lp.PortName}");
+                    Logger.LogInfo($"LoadPort {lp.Name} 已连接，通道：{lp.ChannelInfo}");
+                else
+                    Logger.LogError($"LoadPort {lp.Name} 通道未就绪，请检查通讯设置");
 
-                // 启动后台任务
-                _ = Task.Run(
-                    async () =>
+                // 启动后台轮询任务
+                _ = Task.Run(async () =>
+                {
+                    while (!_cts.IsCancellationRequested)
                     {
-                        while (!_cts.IsCancellationRequested)
-                        {
-                            if (isConnected)
-                            {
-                                await lp.ExecuteCommandsAsync();
-                                await Task.Delay(100, _cts.Token).ContinueWith(_ => { });
-                            }
-                        }
-                    },
-                    _cts.Token
-                );
+                        if (isConnected)
+                            await lp.ExecuteCommandsAsync();
+                        await Task.Delay(100, _cts.Token).ContinueWith(_ => { });
+                    }
+                }, _cts.Token);
 
-                // === 动态生成按钮 ===
                 CreateButtonsForLoadport(lp);
             }
         }
@@ -501,8 +511,14 @@ namespace LoadPort
 
                 // 调整列宽，保证能显示内容
                 lst_Log.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-                lst_Log.Columns[lst_Log.Columns.Count - 1].Width = -2; // 最后一列填充
+                lst_Log.Columns[lst_Log.Columns.Count - 1].Width = -2;
             }
+        }
+
+        private void BtnSettings_Click(object sender, EventArgs e)
+        {
+            var settingsForm = new FormSettings(this);
+            settingsForm.ShowDialog(this);
         }
 
         #endregion

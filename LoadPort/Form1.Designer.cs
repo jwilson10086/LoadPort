@@ -37,6 +37,7 @@
             this.flowLayoutPanelMain = new System.Windows.Forms.FlowLayoutPanel();
             this.lblPlccon = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.btnSettings = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // imageList1
@@ -103,11 +104,22 @@
             this.label1.Size = new System.Drawing.Size(0, 12);
             this.label1.TabIndex = 13;
             // 
+            // btnSettings
+            // 
+            this.btnSettings.Location = new System.Drawing.Point(868, 40);
+            this.btnSettings.Name = "btnSettings";
+            this.btnSettings.Size = new System.Drawing.Size(69, 28);
+            this.btnSettings.TabIndex = 14;
+            this.btnSettings.Text = "通讯设置";
+            this.btnSettings.UseVisualStyleBackColor = true;
+            this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(937, 868);
+            this.Controls.Add(this.btnSettings);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lblPlccon);
             this.Controls.Add(this.flowLayoutPanelMain);
@@ -128,6 +140,7 @@
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanelMain;
         private System.Windows.Forms.Label lblPlccon;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnSettings;
     }
 }
 
